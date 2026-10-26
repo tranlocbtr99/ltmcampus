@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "data": {
+    "sessions": [
+      {
+        "id": "sample-001",
+        "explicitDate": "2026-11-02",
+        "startTime": "13:00",
+        "endTime": "15:15",
+        "subjectNameVi": "Môn học mẫu",
+        "roomName": "Phòng A101",
+        "teacherFullName": "Giảng viên mẫu",
+        "classCode": "SAMPLE-01",
+        "isTamNgung": false
+      }
+    ]
+  }
+}

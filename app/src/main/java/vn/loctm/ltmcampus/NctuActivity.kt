@@ -13,15 +13,16 @@ class NctuActivity:Activity() {
  private lateinit var controller:PortalSyncController
  private lateinit var status:TextView
  private val handler=Handler(Looper.getMainLooper())
+ private var browserLogin=false
  private var pollDelay=15_000L
- private val poll=object:Runnable {override fun run(){controller.request();handler.postDelayed(this,pollDelay)}}
+ private val poll=object:Runnable {override fun run(){if(!browserLogin)controller.request();handler.postDelayed(this,pollDelay)}}
  @SuppressLint("SetJavaScriptEnabled")
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
   val layout=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
   val bar=LinearLayout(this)
   bar.addView(Button(this).apply{setText(R.string.portal_close);setOnClickListener{finish()}})
-  bar.addView(Button(this).apply{setText(R.string.portal_browser);setOnClickListener{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://sv.nctu.edu.vn/dashboard")))}})
+  bar.addView(Button(this).apply{setText(R.string.portal_browser);setOnClickListener{openGoogleBrowser()}})
   bar.addView(Button(this).apply{setText(R.string.portal_clear);setOnClickListener{
    SyncScheduler.disconnect(this@NctuActivity)
    CookieManager.getInstance().removeAllCookies{web.post{web.clearCache(true);WebStorage.getInstance().deleteAllData();web.loadUrl("https://sv.nctu.edu.vn/dashboard")}}
@@ -35,9 +36,11 @@ class NctuActivity:Activity() {
   controller=PortalSyncController(this,web){result->pollDelay=if(result=="ok")60_000L else 15_000L;status.text=SyncScheduler.message(result)}
   web.webViewClient=object:WebViewClient() {
    override fun onPageStarted(v:WebView,url:String,icon:android.graphics.Bitmap?){controller.navigationStarted()}
-   override fun onPageFinished(view:WebView,url:String){view.postDelayed({if(!isFinishing&&!isDestroyed)controller.request()},1500)}
+   override fun onPageFinished(view:WebView,url:String){view.postDelayed({if(!isFinishing&&!isDestroyed&&!browserLogin)controller.request()},1500)}
    override fun shouldOverrideUrlLoading(view:WebView,request:WebResourceRequest):Boolean {
     val uri=request.url
+    if(request.isForMainFrame&&GoogleLoginNavigation.isLoginRedirect(uri.toString())){openGoogleBrowser();return true}
+    if(!request.isForMainFrame)return uri.scheme!="https"
     if(PortalPolicy.isOfficial(uri.toString()))return false
     if(request.isForMainFrame&&request.hasGesture()&&uri.scheme=="https") {
      try{startActivity(Intent(Intent.ACTION_VIEW,uri))}catch(_:Exception){Toast.makeText(this@NctuActivity,R.string.portal_no_browser,Toast.LENGTH_SHORT).show()}
@@ -49,7 +52,20 @@ class NctuActivity:Activity() {
   layout.addView(web,LinearLayout.LayoutParams(-1,0,1f));setContentView(layout)
   web.loadUrl("https://sv.nctu.edu.vn/dashboard")
  }
- override fun onResume(){super.onResume();handler.postDelayed(poll,3000)}
+ private fun openGoogleBrowser() {
+  if(browserLogin)return
+  browserLogin=true;controller.navigationStarted();handler.removeCallbacks(poll)
+  SyncScheduler.disconnect(this)
+  SyncScheduler.prefs(this).edit().putString("status","browser_required").apply()
+  status.text=SyncScheduler.message("browser_required")
+  val uri=Uri.parse(GoogleLoginNavigation.BROWSER_LOGIN)
+  try {startActivity(Intent(Intent.ACTION_VIEW,uri).setPackage("com.android.chrome"))}
+  catch(_:android.content.ActivityNotFoundException) {
+   try{startActivity(Intent(Intent.ACTION_VIEW,uri))}
+   catch(_:android.content.ActivityNotFoundException){browserLogin=false;status.setText(R.string.portal_no_browser)}
+  }
+ }
+ override fun onResume(){super.onResume();if(!browserLogin)handler.postDelayed(poll,3000)else status.text=SyncScheduler.message("browser_required")}
  override fun onPause(){handler.removeCallbacks(poll);super.onPause()}
  override fun onDestroy(){handler.removeCallbacksAndMessages(null);controller.close();web.stopLoading();web.destroy();super.onDestroy()}
 }

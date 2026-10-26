@@ -1,9 +1,9 @@
 <resources>
  <string name="app_name">LTM Campus</string>
  <string name="portal_close">Đóng</string>
- <string name="portal_browser">Trình duyệt</string>
+ <string name="portal_browser">Google qua Chrome</string>
  <string name="portal_clear">Xóa phiên</string>
- <string name="portal_sync_login">Đăng nhập NCTU bên dưới và chờ thông báo cập nhật lịch thành công. Sau đó ứng dụng sẽ tự cập nhật, không cần nhập JSON.</string>
+ <string name="portal_sync_login">Nếu dùng Google, ứng dụng sẽ mở Chrome. Phiên Chrome hiện chưa chuyển được vào bộ tự đồng bộ của ứng dụng.</string>
  <string name="portal_no_browser">Không mở được trình duyệt</string>
  <string name="portal_ssl_error">Không xác minh được kết nối NCTU. Vui lòng thử lại.</string>
 </resources>

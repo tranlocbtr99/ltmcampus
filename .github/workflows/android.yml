@@ -27,7 +27,7 @@ jobs:
       - name: Upload APKs and test reports
         uses: actions/upload-artifact@v4
         with:
-          name: LTM-Campus-0.3.0-build
+          name: LTM-Campus-0.3.1-build
           path: |
             app/build/outputs/apk/**/*.apk
             app/build/reports/tests/

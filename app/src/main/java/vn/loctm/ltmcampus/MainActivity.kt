@@ -106,6 +106,7 @@ private const val MAX_FILE=8*1024*1024
      item{GlassCard{
       Text("Tự cập nhật lịch NCTU",style=MaterialTheme.typography.titleMedium)
       Text("Đăng nhập NCTU một lần trong ứng dụng. Lịch tự cập nhật khi mở app và định kỳ dưới nền khi có mạng. Không lưu mật khẩu trên máy chủ riêng.")
+      Text("Đăng nhập Google phải mở qua trình duyệt; hiện chưa có bàn giao phiên Google về bộ đồng bộ trong ứng dụng.",style=MaterialTheme.typography.bodySmall)
       Text(SyncScheduler.message(syncStatus),color=MaterialTheme.colorScheme.primary)
       if(lastSync>0)Text("Lần cập nhật gần nhất: "+Instant.ofEpochMilli(lastSync).atZone(ZoneId.of("Asia/Ho_Chi_Minh")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm")),style=MaterialTheme.typography.bodySmall)
       Button(onClick={context.startActivity(Intent(context,NctuActivity::class.java))}){Text(if(syncEnabled)"Đăng nhập lại / xem cổng NCTU"else"Đăng nhập & bật tự cập nhật")}
@@ -114,7 +115,7 @@ private const val MAX_FILE=8*1024*1024
      }}
      item{GlassCard{Text("Nhập lịch dự phòng",style=MaterialTheme.typography.titleMedium);Text("Chỉ dùng khi cần nhập tệp lịch thủ công.");OutlinedButton(enabled=!busy,onClick={picker.launch(arrayOf("application/json","text/plain","*/*"))}){Text("Nhập JSON dự phòng")}}}
      item{GlassCard{Text("Sao lưu an toàn",style=MaterialTheme.typography.titleMedium);Text("Bản sao lưu chứa lịch học, ghi chú và lịch thi; không chứa phiên NCTU. Hãy lưu tệp ở nơi riêng tư.");OutlinedButton(enabled=!busy,onClick={exporter.launch("LTM-Campus-${LocalDate.now()}.json")}){Text("Xuất sao lưu")};OutlinedButton(enabled=!busy,onClick={backupPicker.launch(arrayOf("application/json","text/plain","*/*"))}){Text("Khôi phục từ tệp")}}}
-     item{Text("Designed by LocTM · v0.3.0\nChúc các bạn học tốt, thi tốt!",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(12.dp))}
+     item{Text("Designed by LocTM · v0.3.1\nChúc các bạn học tốt, thi tốt!",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(12.dp))}
     }
    }
   }

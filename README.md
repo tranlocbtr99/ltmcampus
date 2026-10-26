@@ -2,14 +2,15 @@
 
 Ứng dụng Android độc lập tự cập nhật lịch NCTU, lưu lịch ngoại tuyến, ghi chú theo môn và quản lý lịch thi. Designed by LocTM.
 
-## Sử dụng bản 0.3.0
+## Bản 0.3.1: sửa mở đăng nhập Google
 
-1. Cài APK đã ký; có thể cài đè bản 0.2.0 cùng khóa mà không gỡ ứng dụng.
-2. Chọn **Cập nhật** hoặc **Kết nối → Đăng nhập & bật tự cập nhật**.
-3. Đăng nhập trên trang NCTU chính chủ **trong ứng dụng**, đợi thông báo cập nhật thành công rồi đóng cổng NCTU.
-4. Lịch tự cập nhật khi mở ứng dụng (giới hạn một lần trong 5 phút), khi chọn Cập nhật, và qua tác vụ nền chu kỳ 30 phút khi có mạng. Android có thể trì hoãn tác vụ nền khi tiết kiệm pin hoặc ứng dụng bị buộc dừng.
+Bản 0.3.0 đã chặn liên kết Chrome `intent://` mà NCTU dùng, rồi tiếp tục chặn chuyển hướng Google bằng JavaScript vì không có user gesture. Bản 0.3.1 nhận diện hai trường hợp này và khởi chạy toàn bộ luồng `https://sv.nctu.edu.vn/login?auto_google=1` bằng Chrome hoặc trình duyệt mặc định, giữ OAuth state và cookie trong cùng trình duyệt. Không giả mạo user-agent và không đưa Google OAuth vào WebView.
 
-Không cần người dùng xuất hoặc nhập JSON cho luồng chính. Nhập JSON chỉ là công cụ dự phòng. Khi phiên đăng nhập không thể làm mới qua bộ kết nối NCTU, ứng dụng hiển thị yêu cầu đăng nhập lại và giữ lịch cũ.
+**Giới hạn quan trọng:** đăng nhập thành công trong Chrome không đồng nghĩa đã đăng nhập bộ đồng bộ của ứng dụng. Cookie Chrome và WebView tách biệt. Trong các module NCTU được kiểm tra chưa xác định được luồng bàn giao phiên cho ứng dụng Android bên thứ ba. Bản này hiển thị rõ trạng thái `browser_required`, không tự bật đồng bộ hoặc báo thành công sau khi người dùng quay lại từ Chrome. Cần cơ chế ủy quyền/bàn giao phiên do NCTU hỗ trợ để hoàn tất tự đồng bộ cho tài khoản đăng nhập Google.
+
+Có thể cài đè APK 0.3.1 lên 0.2.0/0.3.0 cùng khóa, không gỡ ứng dụng. Chọn **Kết nối → Đăng nhập** rồi **Google qua Chrome**, hoặc dùng nút Google trên trang NCTU. Lịch đã lưu, ghi chú, lịch thi và khóa ký được giữ nguyên.
+
+Bộ đồng bộ 0.3.0 bên dưới chỉ hoạt động khi đã có phiên NCTU hợp lệ trong WebView. Không coi kiểm thử client mô phỏng là bằng chứng đăng nhập Google thực tế hoạt động.
 
 ## Đồng bộ
 

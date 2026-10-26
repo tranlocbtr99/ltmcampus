@@ -28,6 +28,7 @@ object SyncScheduler {
   WorkManager.getInstance(context).cancelUniqueWork(IMMEDIATE)
  }
  fun message(status:String)=when(status) {
+  "browser_required"->"Google đang dùng phiên trình duyệt riêng. Chưa kết nối phiên này với tự đồng bộ trong ứng dụng; quay lại app không tự chuyển phiên đăng nhập."
   "syncing"->"Đang cập nhật lịch từ NCTU…"
   "ok"->"Lịch đã được cập nhật tự động"
   "auth"->"Phiên NCTU đã hết hạn. Đăng nhập lại để tiếp tục tự cập nhật."

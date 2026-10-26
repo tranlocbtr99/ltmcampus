@@ -1,6 +1,6 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.compose") }
 android { namespace = "vn.loctm.ltmcampus"; compileSdk = 35
-    defaultConfig { applicationId = "vn.loctm.ltmcampus"; minSdk = 26; targetSdk = 35; versionCode = 3; versionName = "0.3.0" }
+    defaultConfig { applicationId = "vn.loctm.ltmcampus"; minSdk = 26; targetSdk = 35; versionCode = 4; versionName = "0.3.1" }
     val releaseStore = System.getenv("CAMPUS_KEYSTORE")
     if (!releaseStore.isNullOrBlank()) {
         signingConfigs.create("campusRelease") {

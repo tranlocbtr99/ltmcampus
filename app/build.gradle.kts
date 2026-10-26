@@ -1,6 +1,6 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.compose") }
 android { namespace = "vn.loctm.ltmcampus"; compileSdk = 35
-    defaultConfig { applicationId = "vn.loctm.ltmcampus"; minSdk = 26; targetSdk = 35; versionCode = 2; versionName = "0.2.0" }
+    defaultConfig { applicationId = "vn.loctm.ltmcampus"; minSdk = 26; targetSdk = 35; versionCode = 3; versionName = "0.3.0" }
     val releaseStore = System.getenv("CAMPUS_KEYSTORE")
     if (!releaseStore.isNullOrBlank()) {
         signingConfigs.create("campusRelease") {
@@ -16,7 +16,10 @@ android { namespace = "vn.loctm.ltmcampus"; compileSdk = 35
     kotlinOptions { jvmTarget = "17" }
 }
 dependencies {
+    implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("org.json:json:20240303")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))

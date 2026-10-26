@@ -20,12 +20,14 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Portal adapter integration tests
+        run: node tools/test-nctu-sync.mjs
       - name: Unit tests, lint and APK builds
         run: gradle --no-daemon testDebugUnitTest lintDebug assembleDebug assembleRelease
       - name: Upload APKs and test reports
         uses: actions/upload-artifact@v4
         with:
-          name: LTM-Campus-0.2.0-build
+          name: LTM-Campus-0.3.0-build
           path: |
             app/build/outputs/apk/**/*.apk
             app/build/reports/tests/

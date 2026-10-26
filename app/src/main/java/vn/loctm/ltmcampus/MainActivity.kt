@@ -1,5 +1,9 @@
 package vn.loctm.ltmcampus
 
+import android.content.SharedPreferences
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -40,6 +44,11 @@ private const val MAX_FILE=8*1024*1024
  val context=LocalContext.current
  val db=remember { CampusDb(context.applicationContext) }
  val scope=rememberCoroutineScope()
+ val syncPrefs=remember{SyncScheduler.prefs(context)}
+ var syncStatus by remember{mutableStateOf(syncPrefs.getString("status","disconnected")?:"disconnected")}
+ var lastSync by remember{mutableLongStateOf(syncPrefs.getLong("lastSuccess",0))}
+ var syncEnabled by remember{mutableStateOf(syncPrefs.getBoolean("enabled",false))}
+ val lifecycleOwner=LocalLifecycleOwner.current
  var tab by rememberSaveable { mutableIntStateOf(0) }
  var revision by remember { mutableIntStateOf(0) }
  var message by remember { mutableStateOf("") }
@@ -48,6 +57,19 @@ private const val MAX_FILE=8*1024*1024
  var lessons by remember { mutableStateOf(emptyList<Lesson>()) }
  var notes by remember { mutableStateOf(emptyList<Note>()) }
  var exams by remember { mutableStateOf(emptyList<Exam>()) }
+ DisposableEffect(lifecycleOwner) {
+  val listener=SharedPreferences.OnSharedPreferenceChangeListener { _,key->
+   syncStatus=syncPrefs.getString("status","disconnected")?:"disconnected"
+   syncEnabled=syncPrefs.getBoolean("enabled",false)
+   lastSync=syncPrefs.getLong("lastSuccess",0)
+   if(key=="lastSuccess")revision++
+  }
+  syncPrefs.registerOnSharedPreferenceChangeListener(listener)
+  val observer=LifecycleEventObserver{_,event->if(event==Lifecycle.Event.ON_START){revision++;SyncScheduler.refresh(context)}}
+  lifecycleOwner.lifecycle.addObserver(observer)
+  SyncScheduler.refresh(context)
+  onDispose{syncPrefs.unregisterOnSharedPreferenceChangeListener(listener);lifecycleOwner.lifecycle.removeObserver(observer)}
+ }
  LaunchedEffect(revision) {
   withContext(Dispatchers.IO) { Triple(db.lessons(),db.notes(),db.exams()) }.let { lessons=it.first;notes=it.second;exams=it.third }
  }
@@ -73,15 +95,26 @@ private const val MAX_FILE=8*1024*1024
    if(busy)LinearProgressIndicator(Modifier.fillMaxWidth())
    if(message.isNotBlank())Row(Modifier.fillMaxWidth().padding(vertical=4.dp)){Text(message,modifier=Modifier.weight(1f),style=MaterialTheme.typography.bodySmall);TextButton(onClick={message=""}){Text("Đóng")}}
    when(tab) {
-    0->ScheduleScreen(lessons,busy,{picker.launch(arrayOf("application/json","text/plain","*/*"))})
+    0->Column {
+     Text(SyncScheduler.message(syncStatus),style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(vertical=8.dp))
+     ScheduleScreen(lessons,busy){if(syncEnabled)SyncScheduler.refresh(context,true)else context.startActivity(Intent(context,NctuActivity::class.java))}
+    }
     1->NotesScreen(notes,busy){id,subject,content->runTask{if(id==null)db.addNote(subject,requireNotNull(content))else if(content==null)db.deleteNote(id)else db.updateNote(id,subject,content);"Đã cập nhật ghi chú"}}
     2->ExamsScreen(exams,busy,{subject,title,time->runTask{db.addExam(subject,title,time);"Đã thêm lịch thi"}},{id->runTask{db.deleteExam(id);"Đã xóa lịch thi"}})
     3->LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=12.dp)) {
      item{Text("Kết nối & dữ liệu",style=MaterialTheme.typography.titleLarge)}
-     item{GlassCard{Text("Cổng sinh viên NCTU",style=MaterialTheme.typography.titleMedium);Text("Đăng nhập trên trang chính chủ ngay trong ứng dụng. Phiên đăng nhập được lưu cục bộ; ứng dụng không thu thập mật khẩu và không có máy chủ trung gian.");Button(onClick={context.startActivity(Intent(context,NctuActivity::class.java))}){Text("Đăng nhập NCTU")};Text("Nếu NCTU yêu cầu trình duyệt ngoài cho SSO, chọn Trình duyệt. Đăng nhập không tự đồng bộ lịch vào ứng dụng.",style=MaterialTheme.typography.bodySmall)}}
-     item{GlassCard{Text("Thời khóa biểu ngoại tuyến",style=MaterialTheme.typography.titleMedium);Text("Nhập phản hồi JSON gồm success và data.sessions. Có thể nhập lại để cập nhật buổi học; lịch ngoài tệp vẫn được giữ.");OutlinedButton(enabled=!busy,onClick={picker.launch(arrayOf("application/json","text/plain","*/*"))}){Text("Nhập lịch NCTU")}}}
+     item{GlassCard{
+      Text("Tự cập nhật lịch NCTU",style=MaterialTheme.typography.titleMedium)
+      Text("Đăng nhập NCTU một lần trong ứng dụng. Lịch tự cập nhật khi mở app và định kỳ dưới nền khi có mạng. Không lưu mật khẩu trên máy chủ riêng.")
+      Text(SyncScheduler.message(syncStatus),color=MaterialTheme.colorScheme.primary)
+      if(lastSync>0)Text("Lần cập nhật gần nhất: "+Instant.ofEpochMilli(lastSync).atZone(ZoneId.of("Asia/Ho_Chi_Minh")).format(DateTimeFormatter.ofPattern("dd/MM HH:mm")),style=MaterialTheme.typography.bodySmall)
+      Button(onClick={context.startActivity(Intent(context,NctuActivity::class.java))}){Text(if(syncEnabled)"Đăng nhập lại / xem cổng NCTU"else"Đăng nhập & bật tự cập nhật")}
+      if(syncEnabled){OutlinedButton(onClick={SyncScheduler.refresh(context,true)}){Text("Cập nhật ngay")};TextButton(onClick={SyncScheduler.disconnect(context)}){Text("Tắt tự cập nhật")}}
+      Text("Hết phiên: ứng dụng yêu cầu đăng nhập lại. Android có thể trì hoãn lịch chạy nền để tiết kiệm pin.",style=MaterialTheme.typography.bodySmall)
+     }}
+     item{GlassCard{Text("Nhập lịch dự phòng",style=MaterialTheme.typography.titleMedium);Text("Chỉ dùng khi cần nhập tệp lịch thủ công.");OutlinedButton(enabled=!busy,onClick={picker.launch(arrayOf("application/json","text/plain","*/*"))}){Text("Nhập JSON dự phòng")}}}
      item{GlassCard{Text("Sao lưu an toàn",style=MaterialTheme.typography.titleMedium);Text("Bản sao lưu chứa lịch học, ghi chú và lịch thi; không chứa phiên NCTU. Hãy lưu tệp ở nơi riêng tư.");OutlinedButton(enabled=!busy,onClick={exporter.launch("LTM-Campus-${LocalDate.now()}.json")}){Text("Xuất sao lưu")};OutlinedButton(enabled=!busy,onClick={backupPicker.launch(arrayOf("application/json","text/plain","*/*"))}){Text("Khôi phục từ tệp")}}}
-     item{Text("Designed by LocTM · v0.2.0\nChúc các bạn học tốt, thi tốt!",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(12.dp))}
+     item{Text("Designed by LocTM · v0.3.0\nChúc các bạn học tốt, thi tốt!",style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(12.dp))}
     }
    }
   }
@@ -97,11 +130,11 @@ private const val MAX_FILE=8*1024*1024
  val monday=date.minusDays((date.dayOfWeek.value-1).toLong())
  val shown=lessons.filter{ l-> val d=LocalDate.parse(l.date);(mode==2||if(mode==0)d==date else !d.isBefore(monday)&&d.isBefore(monday.plusDays(7)))&&(l.subject.contains(query,true)||l.code.contains(query,true)) }
  LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(vertical=12.dp)) {
-  item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("Thời khóa biểu",style=MaterialTheme.typography.titleLarge);TextButton(enabled=!busy,onClick=onImport){Text("Nhập lịch")}}}
+  item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("Thời khóa biểu",style=MaterialTheme.typography.titleLarge);TextButton(enabled=!busy,onClick=onImport){Text("Cập nhật")}}}
   item{Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){listOf("Ngày","Tuần","Tất cả").forEachIndexed{i,label->FilterChip(selected=mode==i,onClick={mode=i},label={Text(label)})}}}
   if(mode!=2)item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){TextButton(onClick={dateText=date.minusDays(if(mode==0)1 else 7).toString()}){Text("‹ Trước")};TextButton(onClick={dateText=LocalDate.now().toString()}){Text(if(mode==0)date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) else "${monday.format(DateTimeFormatter.ofPattern("dd/MM"))} – ${monday.plusDays(6).format(DateTimeFormatter.ofPattern("dd/MM"))}")};TextButton(onClick={dateText=date.plusDays(if(mode==0)1 else 7).toString()}){Text("Sau ›")}}}
   item{OutlinedTextField(query,{query=it},modifier=Modifier.fillMaxWidth(),label={Text("Tìm môn học / mã lớp")},singleLine=true)}
-  if(shown.isEmpty())item{GlassCard{Text(if(lessons.isEmpty())"Chưa có lịch học. Nhập tệp JSON NCTU để bắt đầu." else "Không có buổi học trong lựa chọn này.")}}
+  if(shown.isEmpty())item{GlassCard{Text(if(lessons.isEmpty())"Chưa có lịch học. Chọn Cập nhật để đăng nhập và kết nối NCTU." else "Không có buổi học trong lựa chọn này.")}}
   items(shown,key={it.id}){l->GlassCard{Text("${LocalDate.parse(l.date).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))} · ${l.start}–${l.end}",color=MaterialTheme.colorScheme.primary,style=MaterialTheme.typography.labelLarge);Text(l.subject,style=MaterialTheme.typography.titleMedium);Text("${l.code} · ${l.room}");if(l.teacher.isNotBlank())Text(l.teacher,style=MaterialTheme.typography.bodySmall);if(l.suspended)Text("Tạm ngưng",color=MaterialTheme.colorScheme.error)}}
  }
 }

@@ -6,7 +6,7 @@ import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 
 object ScheduleParser {
- fun parse(raw:String):List<Lesson> {
+ fun parse(raw:String,allowEmpty:Boolean=false):List<Lesson> {
   val root=JSONObject(raw)
   require(root.optBoolean("success",false)) { "Phản hồi NCTU không thành công" }
   val data=root.getJSONObject("data")
@@ -36,7 +36,7 @@ object ScheduleParser {
     date=date.plusDays(1)
    }
   }
-  require(result.isNotEmpty()) { "Không tìm thấy buổi học hợp lệ; dữ liệu cũ được giữ nguyên" }
+  require(allowEmpty||result.isNotEmpty()) { "Không tìm thấy buổi học hợp lệ; dữ liệu cũ được giữ nguyên" }
   return result.values.toList()
  }
 }

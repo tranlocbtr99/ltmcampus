@@ -1,28 +1,20 @@
-# LTM Campus 0.2.0 — 26/10/2026
+# LTM Campus 0.3.0 — 26/10/2026
 
-Bản MVP Android độc lập, không phụ thuộc LTMstu hoặc LTMsav.
+Tự đồng bộ lịch qua phiên NCTU chính chủ trong ứng dụng, thay cho luồng nhập JSON của 0.2.0.
 
-- applicationId: `vn.loctm.ltmcampus`
-- versionCode: `2`; versionName: `0.2.0`
-- Android tối thiểu: 8.0 / API 26; target SDK: 35
-- APK release khoảng 6.24 MiB, không bật debug.
-- SHA-256 APK: `9c8c008538c18be37062df408be6d69dcefb5395b9132669f403b2068c4c8b83`
-- SHA-256 chứng chỉ ký: `46e52032dd956e026e1cc93f8da4662a2f162f10dab22f34a44ebdd5a84a065e`
-
-## Chức năng
-
-Lịch học ngoại tuyến theo ngày/tuần, tìm môn/mã lớp, nhập JSON NCTU; ghi chú theo môn có sửa/xóa; tạo lịch thi và đếm ngược theo giờ Việt Nam, chuyển sang lịch hệ thống; đăng nhập NCTU chính chủ trong app với trình duyệt ngoài dự phòng; xuất/khôi phục sao lưu JSON.
+- applicationId: `vn.loctm.ltmcampus`; versionCode `3`; versionName `0.3.0`.
+- Sau đăng nhập tự lấy lịch; kiểm tra khi mở app và theo tác vụ nền chu kỳ 30 phút, có thể bị Android trì hoãn.
+- Hỗ trợ đổi giờ/phòng/trạng thái và gỡ buổi không còn trong snapshot hợp lệ. Có trạng thái cập nhật gần nhất, cập nhật ngay và tắt đồng bộ.
+- Không thay khóa ký; migration dữ liệu v1 → v2 thêm bảng, giữ ghi chú và lịch thi.
+- SHA-256 APK: `cfe5618c47cd4e324c808df0a8acda6aa880944f5351020f5e33fba00793d9b8`.
+- SHA-256 chứng chỉ ký: `46e52032dd956e026e1cc93f8da4662a2f162f10dab22f34a44ebdd5a84a065e` (cùng bản 0.2.0).
 
 ## Kiểm chứng
 
-- Clean build: testDebugUnitTest, lintDebug, assembleDebug, assembleRelease đạt.
-- 12 kiểm thử đơn vị đạt, gồm dữ liệu thật 70 buổi được cung cấp riêng để kiểm thử cục bộ. Dữ liệu cá nhân không được commit.
-- Android Lint: 0 lỗi, 0 cảnh báo trên mã cuối.
-- APK được kiểm chứng chữ ký v2/v3, zip alignment 16 KB.
-- Khóa ký được giữ riêng, không lưu trong repository hoặc workflow.
+- Clean build testDebugUnitTest, lintDebug, assembleRelease thành công.
+- 24 kiểm thử JVM đạt, gồm SQLite thực thi bằng Robolectric: migration, cập nhật/gỡ buổi, snapshot lỗi rollback, phản hồi cũ, đổi tài khoản và sao lưu/khôi phục nguồn lịch.
+- 11 kiểm tra adapter JavaScript đạt, gồm xác thực hết hạn, mất mạng, schema lỗi, domain không hợp lệ, lọc dữ liệu nhạy cảm và dữ liệu 70 buổi được cung cấp riêng.
+- Android Lint: 0 lỗi; 1 cảnh báo có phiên bản activity-compose mới hơn. Giữ phiên bản hiện có để tránh nâng thư viện ngoài phạm vi thay đổi.
+- APK release khoảng 6,62 MiB, xác minh chữ ký v2/v3 và zip alignment 16 KB.
 
-## Giới hạn xác minh
-
-Chưa chạy trên điện thoại thật hoặc kiểm tra đăng nhập SSO với tài khoản NCTU. Đăng nhập không tự đồng bộ lịch: phiên bản này nhập JSON. Không tuyên bố có AI, widget hoặc đồng bộ đa thiết bị.
-
-Nhập JSON gộp lịch, không xóa các buổi ngoài tệp. Khôi phục sao lưu thay thế dữ liệu sau xác nhận và rollback nếu tệp lỗi. Bản sao lưu thủ công không chứa phiên đăng nhập NCTU.
+Chưa xác minh bằng tài khoản NCTU thật trên điện thoại. Client chính chủ và định dạng API được xác định từ JavaScript/JSON đã cung cấp; kiểm thử adapter dùng client mô phỏng. Cần đăng nhập lần đầu trong ứng dụng để xác nhận kết nối thực tế. Không tuyên bố tự cập nhật tức thời hoặc tiếp tục cập nhật khi phiên NCTU không thể làm mới.

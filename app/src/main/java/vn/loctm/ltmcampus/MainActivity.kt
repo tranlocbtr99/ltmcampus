@@ -66,7 +66,7 @@ private const val MAX_FILE=8*1024*1024
  Scaffold(containerColor=Color.Transparent,topBar={Surface(color=Color.White.copy(alpha=.8f)) {Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal=20.dp,vertical=14.dp)) {
   Text("LTM Campus",style=MaterialTheme.typography.headlineSmall);Text("Học tập chủ động, mỗi ngày",style=MaterialTheme.typography.bodySmall,color=Color(0xFF64748B))
  }}},bottomBar={NavigationBar(containerColor=Color.White.copy(alpha=.95f)) {
-  val icons=listOf(Icons.Rounded.DateRange,Icons.Rounded.Edit,Icons.Rounded.Timer,Icons.Rounded.Link)
+  val icons=listOf(Icons.Rounded.DateRange,Icons.Rounded.Edit,Icons.Rounded.CheckCircle,Icons.Rounded.AccountCircle)
   listOf("Lịch học","Ghi chú","Thi cử","Kết nối").forEachIndexed{i,t->NavigationBarItem(selected=tab==i,onClick={tab=i},icon={Icon(icons[i],t)},label={Text(t)})}
  }}) { padding ->
   Column(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFFEAF1FF),Color(0xFFF4F2FF),Color(0xFFF7FAFF)))).padding(padding).padding(horizontal=16.dp)) {
@@ -120,6 +120,8 @@ private const val MAX_FILE=8*1024*1024
 }
 @Composable fun ExamsScreen(exams:List<Exam>,busy:Boolean,onAdd:(String,String,Long)->Unit,onDelete:(Long)->Unit) {
  val context=LocalContext.current
+ var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+ LaunchedEffect(Unit) { while(true) { now=System.currentTimeMillis();kotlinx.coroutines.delay(60_000) } }
  var subject by rememberSaveable{mutableStateOf("")};var title by rememberSaveable{mutableStateOf("")};var whenText by rememberSaveable{mutableStateOf("")};var error by remember{mutableStateOf("")};var delete by remember{mutableStateOf<Exam?>(null)}
  LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(vertical=12.dp)) {
   item{Text("Thi & kiểm tra",style=MaterialTheme.typography.titleLarge)}
@@ -128,7 +130,7 @@ private const val MAX_FILE=8*1024*1024
   item{OutlinedTextField(whenText,{whenText=it},modifier=Modifier.fillMaxWidth(),label={Text("Ngày giờ: 2026-12-20 08:00")},singleLine=true)}
   item{if(error.isNotEmpty())Text(error,color=MaterialTheme.colorScheme.error);Button(enabled=!busy&&subject.isNotBlank()&&title.isNotBlank(),onClick={try{val whenMs=LocalDateTime.parse(whenText.trim().replace(' ','T')).atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant().toEpochMilli();require(whenMs>System.currentTimeMillis());onAdd(subject.trim(),title.trim(),whenMs);title="";whenText="";error=""}catch(_:Exception){error="Nhập ngày tương lai theo mẫu YYYY-MM-DD HH:mm (giờ Việt Nam)"}}){Text("Thêm lịch thi")}}
   if(exams.isEmpty())item{Text("Thêm kỳ thi sắp tới để theo dõi đếm ngược.")}
-  items(exams,key={it.id}){x->val delta=x.whenMillis-System.currentTimeMillis();GlassCard{Text(x.subject,style=MaterialTheme.typography.titleMedium);Text(x.title);Text(Instant.ofEpochMilli(x.whenMillis).atZone(ZoneId.of("Asia/Ho_Chi_Minh")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))+" · giờ VN");Text(if(delta>0)"Còn ${(delta+86_399_999)/86_400_000} ngày" else "Đã đến hạn",color=MaterialTheme.colorScheme.primary);Row{TextButton(onClick={try{context.startActivity(Intent(Intent.ACTION_INSERT,CalendarContract.Events.CONTENT_URI).putExtra(CalendarContract.Events.TITLE,"${x.subject}: ${x.title}").putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME,x.whenMillis).putExtra(CalendarContract.EXTRA_EVENT_END_TIME,x.whenMillis+3600000))}catch(_:Exception){error="Thiết bị chưa có ứng dụng lịch"}}){Text("Thêm vào lịch máy")};TextButton(enabled=!busy,onClick={delete=x}){Text("Xóa")}}}}
+  items(exams,key={it.id}){x->val delta=x.whenMillis-now;GlassCard{Text(x.subject,style=MaterialTheme.typography.titleMedium);Text(x.title);Text(Instant.ofEpochMilli(x.whenMillis).atZone(ZoneId.of("Asia/Ho_Chi_Minh")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))+" · giờ VN");Text(if(delta>0)"Còn ${(delta+86_399_999)/86_400_000} ngày" else "Đã đến hạn",color=MaterialTheme.colorScheme.primary);Row{TextButton(onClick={try{context.startActivity(Intent(Intent.ACTION_INSERT,CalendarContract.Events.CONTENT_URI).putExtra(CalendarContract.Events.TITLE,"${x.subject}: ${x.title}").putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME,x.whenMillis).putExtra(CalendarContract.EXTRA_EVENT_END_TIME,x.whenMillis+3600000))}catch(_:Exception){error="Thiết bị chưa có ứng dụng lịch"}}){Text("Thêm vào lịch máy")};TextButton(enabled=!busy,onClick={delete=x}){Text("Xóa")}}}}
  }
  if(delete!=null)AlertDialog(onDismissRequest={delete=null},title={Text("Xóa lịch thi?")},text={Text(delete!!.title)},confirmButton={TextButton(onClick={onDelete(delete!!.id);delete=null}){Text("Xóa")}},dismissButton={TextButton(onClick={delete=null}){Text("Hủy")}})
 }

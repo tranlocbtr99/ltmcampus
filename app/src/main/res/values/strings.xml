@@ -1,0 +1,7 @@
+<resources>
+ <string name="app_name">LTM Campus</string>
+ <string name="portal_close">Đóng</string>
+ <string name="portal_browser">Trình duyệt</string>
+ <string name="portal_clear">Xóa phiên</string>
+ <string name="portal_privacy">NCTU chính chủ · Phiên đăng nhập chỉ lưu trong WebView trên thiết bị</string>
+</resources>

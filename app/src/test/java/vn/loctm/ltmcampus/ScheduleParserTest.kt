@@ -13,11 +13,13 @@ class ScheduleParserTest {
  @Test(expected=IllegalArgumentException::class) fun rejectsEmptyImport() {ScheduleParser.parse(payload(""))}
  @Test(expected=IllegalArgumentException::class) fun rejectsReversedTimes() {ScheduleParser.parse(payload("{${lesson.replace("12:00","08:00")}}"))}
  @Test fun parsesPrivateFixtureWhenProvided() {
-  val path=System.getenv("CAMPUS_TEST_SCHEDULE")?:return
-  val raw=java.io.File(path).readText()
+  val path=System.getenv("CAMPUS_TEST_SCHEDULE")
+  org.junit.Assume.assumeTrue("Private fixture supplied locally",path!=null)
+  val raw=java.io.File(requireNotNull(path)).readText()
   val source=org.json.JSONObject(raw).getJSONObject("data").getJSONArray("sessions")
   val parsed=ScheduleParser.parse(raw)
   assertEquals(source.length(),parsed.size)
+  println("Private fixture verified: ${parsed.size} sessions")
   assertEquals(parsed.size,parsed.map{it.id}.distinct().size)
  }
 }

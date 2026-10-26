@@ -16,11 +16,11 @@ class NctuActivity:Activity() {
   super.onCreate(savedInstanceState)
   val layout=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
   val bar=LinearLayout(this)
-  bar.addView(Button(this).apply{text="Đóng";setOnClickListener{finish()}})
-  bar.addView(Button(this).apply{text="Trình duyệt";setOnClickListener{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://sv.nctu.edu.vn/dashboard")))}})
-  bar.addView(Button(this).apply{text="Xóa phiên";setOnClickListener{CookieManager.getInstance().removeAllCookies{web.post{web.clearCache(true);WebStorage.getInstance().deleteAllData();web.loadUrl("https://sv.nctu.edu.vn/dashboard")}}}})
+  bar.addView(Button(this).apply{setText(R.string.portal_close);setOnClickListener{finish()}})
+  bar.addView(Button(this).apply{setText(R.string.portal_browser);setOnClickListener{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://sv.nctu.edu.vn/dashboard")))}})
+  bar.addView(Button(this).apply{setText(R.string.portal_clear);setOnClickListener{CookieManager.getInstance().removeAllCookies{web.post{web.clearCache(true);WebStorage.getInstance().deleteAllData();web.loadUrl("https://sv.nctu.edu.vn/dashboard")}}}})
   layout.addView(bar)
-  layout.addView(TextView(this).apply{text="NCTU chính chủ · Phiên đăng nhập chỉ lưu trong WebView trên thiết bị";setPadding(16,8,16,8)})
+  layout.addView(TextView(this).apply{setText(R.string.portal_privacy);setPadding(16,8,16,8)})
   web=WebView(this)
   web.settings.apply { javaScriptEnabled=true;domStorageEnabled=true;allowFileAccess=false;allowContentAccess=false;mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW;setSupportMultipleWindows(false) }
   CookieManager.getInstance().setAcceptThirdPartyCookies(web,false)

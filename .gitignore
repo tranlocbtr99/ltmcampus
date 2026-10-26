@@ -7,3 +7,6 @@ local.properties
 *.apk
 *.aab
 signing.properties
+
+.kotlin/
+*.idsig
